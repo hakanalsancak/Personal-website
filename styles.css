@@ -647,9 +647,6 @@ body:hover .cursor-glow {
     animation: scroll 30s linear infinite;
 }
 
-.marquee:hover {
-    animation-play-state: paused;
-}
 
 .marquee-content {
     display: flex;
