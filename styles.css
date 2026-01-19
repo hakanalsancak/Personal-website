@@ -152,14 +152,37 @@ body:hover .cursor-glow {
     gap: var(--space-sm);
 }
 
-.logo-img {
-    height: 40px;
-    width: auto;
-    transition: var(--transition-base);
+.logo-text {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: var(--gradient-coral);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+    transition: var(--transition-slow);
+    position: relative;
 }
 
-.logo:hover .logo-img {
+.logo-accent {
+    background: var(--mint);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: var(--transition-slow);
+}
+
+.logo:hover .logo-text {
     transform: scale(1.05);
+    filter: brightness(1.1);
+}
+
+.logo:hover .logo-accent {
+    background: var(--coral);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .nav-links {
@@ -309,6 +332,28 @@ body:hover .cursor-glow {
     margin: 0 auto;
     position: relative;
     z-index: 10;
+}
+
+.hero-name {
+    font-family: var(--font-display);
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--gray-400);
+    margin-bottom: var(--space-lg);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.hero-name::before,
+.hero-name::after {
+    content: '';
+    width: 30px;
+    height: 1px;
+    background: var(--gray-300);
 }
 
 .hero-badge {
