@@ -38,29 +38,66 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: email,
-        tags: ['website-subscription']
+        email: email
+        // Removed tags for now - can add back if needed
       })
     });
 
-    const data = await response.json();
+    // Parse response safely
+    let data;
+    const responseText = await response.text();
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch (parseError) {
+      console.error('Failed to parse Buttondown response:', responseText);
+      return res.status(500).json({ 
+        error: 'Invalid response from email service. Please try again.' 
+      });
+    }
 
     if (!response.ok) {
+      console.error('Buttondown API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: data
+      });
+
       // Handle specific error cases
-      if (response.status === 400 && data.email) {
-        // Check if email is already subscribed
-        const errorMessage = Array.isArray(data.email) ? data.email[0] : data.email;
-        if (errorMessage.includes('already') || errorMessage.includes('exists')) {
-          return res.status(200).json({ 
-            message: 'already_subscribed',
-            success: true 
+      if (response.status === 400) {
+        // Check for email validation errors
+        if (data.email) {
+          const errorMessage = Array.isArray(data.email) ? data.email[0] : data.email;
+          if (typeof errorMessage === 'string' && 
+              (errorMessage.toLowerCase().includes('already') || 
+               errorMessage.toLowerCase().includes('exists') ||
+               errorMessage.toLowerCase().includes('subscribed'))) {
+            return res.status(200).json({ 
+              message: 'already_subscribed',
+              success: true 
+            });
+          }
+          return res.status(400).json({ 
+            error: typeof errorMessage === 'string' ? errorMessage : 'Invalid email address' 
           });
         }
-        return res.status(400).json({ error: errorMessage });
+        
+        // Generic 400 error
+        return res.status(400).json({ 
+          error: data.detail || data.message || 'Invalid request' 
+        });
+      }
+
+      // Handle 401 Unauthorized (wrong API key)
+      if (response.status === 401) {
+        console.error('Buttondown API authentication failed - check API key');
+        return res.status(500).json({ 
+          error: 'Authentication failed. Please contact the site administrator.' 
+        });
       }
       
+      // Other errors
       return res.status(response.status).json({ 
-        error: data.detail || data.message || 'Subscription failed' 
+        error: data.detail || data.message || `Subscription failed (${response.status})` 
       });
     }
 
@@ -73,7 +110,7 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Buttondown API error:', error);
     return res.status(500).json({ 
-      error: 'Failed to process subscription. Please try again later.' 
+      error: error.message || 'Failed to process subscription. Please try again later.' 
     });
   }
 }
