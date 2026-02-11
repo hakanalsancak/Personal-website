@@ -149,12 +149,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 });
 
-// ===== Newsletter Subscription Form (Buttondown) =====
+// ===== Newsletter Subscription Form (Buttondown Embed) =====
 const newsletterForm = document.getElementById('newsletterForm');
-const emailInput = document.getElementById('emailInput');
+const emailInput = document.getElementById('bd-email');
 const formMessage = document.getElementById('formMessage');
 
-if (newsletterForm) {
+if (newsletterForm && emailInput && formMessage) {
+
     newsletterForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -177,67 +178,35 @@ if (newsletterForm) {
         formMessage.className = 'form-message';
         
         try {
-            // Call our serverless function
-            const response = await fetch('/api/subscribe', {
+            // Submit to Buttondown's embed endpoint
+            const formData = new FormData();
+            formData.append('email', email);
+            
+            const response = await fetch('https://buttondown.com/api/emails/embed-subscribe/hakanalsancak', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email: email })
+                body: formData,
+                referrerPolicy: 'unsafe-url'
             });
             
-            // Parse JSON response safely
-            let data;
-            try {
-                const text = await response.text();
-                data = text ? JSON.parse(text) : {};
-            } catch (parseError) {
-                console.error('JSON parse error:', parseError);
-                throw new Error('Invalid response from server');
-            }
-            
-            if (!response.ok) {
-                // Extract error message safely
-                const errorText = typeof data.error === 'string' 
-                    ? data.error 
-                    : (data.error?.message || 'Subscription failed');
-                throw new Error(errorText);
-            }
-            
-            // Handle success or already subscribed
-            if (data.message === 'already_subscribed') {
-                formMessage.textContent = '✅ You\'re already subscribed!';
-                formMessage.className = 'form-message success';
-            } else {
+            // Buttondown returns HTML on success, so we check status
+            if (response.ok || response.status === 200) {
                 formMessage.textContent = '🎉 Successfully subscribed! Check your email for confirmation.';
                 formMessage.className = 'form-message success';
                 emailInput.value = '';
+            } else {
+                // Try to parse error if available
+                const text = await response.text();
+                throw new Error('Subscription failed. Please try again.');
             }
             
         } catch (error) {
             console.error('Subscription error:', error);
             
-            // Safely extract error message
+            // User-friendly error messages
             let errorMsg = 'Something went wrong. Please try again later.';
             
-            if (error && typeof error === 'object') {
-                if (typeof error.message === 'string') {
-                    errorMsg = error.message;
-                } else if (typeof error.toString === 'function') {
-                    errorMsg = error.toString();
-                }
-            } else if (typeof error === 'string') {
-                errorMsg = error;
-            }
-            
-            // Check if it's a network/fetch error
-            if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError') || errorMsg.includes('fetch')) {
-                errorMsg = 'Unable to connect to the server. Please make sure you\'re connected to the internet and try again.';
-            }
-            
-            // Ensure we have a valid string
-            if (typeof errorMsg !== 'string' || errorMsg === '[object Object]') {
-                errorMsg = 'Something went wrong. Please try again later.';
+            if (error && typeof error.message === 'string') {
+                errorMsg = error.message;
             }
             
             formMessage.textContent = `❌ ${errorMsg}`;

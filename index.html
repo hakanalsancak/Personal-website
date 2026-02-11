@@ -343,11 +343,17 @@
                 Be the first to know when I launch new projects and startups. 
                 Join the list to get early access and exclusive updates.
             </p>
-            <form class="newsletter-form" id="newsletterForm">
+            <form 
+                action="https://buttondown.com/api/emails/embed-subscribe/hakanalsancak"
+                method="post"
+                class="newsletter-form embeddable-buttondown-form"
+                referrerpolicy="unsafe-url"
+                id="newsletterForm"
+            >
                 <div class="form-group">
                     <input 
                         type="email" 
-                        id="emailInput" 
+                        id="bd-email" 
                         name="email" 
                         placeholder="Enter your email address" 
                         required
@@ -361,6 +367,11 @@
                     </button>
                 </div>
                 <p class="form-message" id="formMessage"></p>
+                <p class="buttondown-attribution">
+                    <a href="https://buttondown.com/refer/hakanalsancak" target="_blank" rel="noopener">
+                        Powered by Buttondown
+                    </a>
+                </p>
             </form>
         </div>
     </section>
