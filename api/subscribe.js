@@ -56,11 +56,14 @@ export default async function handler(req, res) {
     }
 
     if (!response.ok) {
-      console.error('Buttondown API error:', {
+      // Log full error details for debugging
+      const errorDetails = {
         status: response.status,
         statusText: response.statusText,
-        data: data
-      });
+        data: data,
+        responseText: responseText
+      };
+      console.error('Buttondown API error:', JSON.stringify(errorDetails, null, 2));
 
       // Handle specific error cases
       if (response.status === 400) {
@@ -81,9 +84,10 @@ export default async function handler(req, res) {
           });
         }
         
-        // Generic 400 error
+        // Generic 400 error - return more details for debugging
+        const errorMsg = data.detail || data.message || data.error || JSON.stringify(data) || 'Invalid request';
         return res.status(400).json({ 
-          error: data.detail || data.message || 'Invalid request' 
+          error: errorMsg 
         });
       }
 
@@ -91,13 +95,21 @@ export default async function handler(req, res) {
       if (response.status === 401) {
         console.error('Buttondown API authentication failed - check API key');
         return res.status(500).json({ 
-          error: 'Authentication failed. Please contact the site administrator.' 
+          error: 'Authentication failed. Please verify your API key is correct.' 
+        });
+      }
+
+      // Handle 403 Forbidden
+      if (response.status === 403) {
+        return res.status(500).json({ 
+          error: 'Access forbidden. Please check your API key permissions.' 
         });
       }
       
-      // Other errors
+      // Other errors - return detailed error message
+      const errorMsg = data.detail || data.message || data.error || JSON.stringify(data) || `Subscription failed (${response.status})`;
       return res.status(response.status).json({ 
-        error: data.detail || data.message || `Subscription failed (${response.status})` 
+        error: errorMsg 
       });
     }
 
