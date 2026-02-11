@@ -230,7 +230,10 @@
                         <span class="tag">Finance</span>
                         <span class="tag">B2B</span>
                     </div>
-                    <h3 class="project-title">Check Up Invoice</h3>
+                    <div class="project-title-wrapper">
+                        <img src="public/checkupinvoice_logo.svg" alt="Check Up Invoice logo" class="project-logo project-logo-lg">
+                        <h3 class="project-title">Check Up Invoice</h3>
+                    </div>
                     <p class="project-description">
                         Compare supplier invoices against your agreed price catalogues instantly. Detect overcharges and recover costs.
                     </p>
@@ -331,6 +334,37 @@
         </div>
     </section>
 
+    <!-- Newsletter Subscription Section -->
+    <section id="newsletter" class="newsletter">
+        <div class="newsletter-content">
+            <span class="section-tag">Stay Updated</span>
+            <h2 class="newsletter-title">Get notified about my new startups</h2>
+            <p class="newsletter-description">
+                Be the first to know when I launch new projects and startups. 
+                Join the list to get early access and exclusive updates.
+            </p>
+            <form class="newsletter-form" id="newsletterForm">
+                <div class="form-group">
+                    <input 
+                        type="email" 
+                        id="emailInput" 
+                        name="email" 
+                        placeholder="Enter your email address" 
+                        required
+                        class="newsletter-input"
+                    >
+                    <button type="submit" class="btn btn-primary newsletter-submit">
+                        <span>Subscribe</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+                <p class="form-message" id="formMessage"></p>
+            </form>
+        </div>
+    </section>
+
     <!-- Contact Section -->
     <section id="contact" class="contact">
         <div class="contact-content">
@@ -342,7 +376,7 @@
             <div class="contact-links">
                 <a href="mailto:hakanalsancak01@gmail.com" class="contact-link">
                     <span class="contact-link-icon">✉️</span>
-                    <span>contact@hakanalsancak.com</span>
+                    <span>hakanalsancak01@gmail.com</span>
                 </a>
             </div>
         </div>

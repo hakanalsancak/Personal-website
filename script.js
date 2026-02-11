@@ -149,6 +149,81 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 });
 
+// ===== Newsletter Subscription Form (Buttondown) =====
+const newsletterForm = document.getElementById('newsletterForm');
+const emailInput = document.getElementById('emailInput');
+const formMessage = document.getElementById('formMessage');
+
+if (newsletterForm) {
+    newsletterForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = emailInput.value.trim();
+        
+        // Basic email validation
+        if (!email || !email.includes('@')) {
+            formMessage.textContent = '❌ Please enter a valid email address.';
+            formMessage.className = 'form-message error';
+            return;
+        }
+        
+        const submitButton = newsletterForm.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        
+        // Disable form during submission
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span>Subscribing...</span>';
+        formMessage.textContent = '';
+        formMessage.className = 'form-message';
+        
+        try {
+            // Call our serverless function
+            const response = await fetch('/api/subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: email })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Subscription failed');
+            }
+            
+            // Handle success or already subscribed
+            if (data.message === 'already_subscribed') {
+                formMessage.textContent = '✅ You\'re already subscribed!';
+                formMessage.className = 'form-message success';
+            } else {
+                formMessage.textContent = '🎉 Successfully subscribed! Check your email for confirmation.';
+                formMessage.className = 'form-message success';
+                emailInput.value = '';
+            }
+            
+        } catch (error) {
+            console.error('Subscription error:', error);
+            
+            // User-friendly error messages
+            let errorMsg = error.message || 'Something went wrong. Please try again later.';
+            
+            // Check if it's a network/fetch error
+            if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+                errorMsg = 'Unable to connect to the server. Please make sure you\'re connected to the internet and try again.';
+                console.error('Network error - API endpoint may not be available. Make sure the site is deployed to Vercel or run "vercel dev" for local testing.');
+            }
+            
+            formMessage.textContent = `❌ ${errorMsg}`;
+            formMessage.className = 'form-message error';
+        } finally {
+            // Reset button
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButtonText;
+        }
+    });
+}
+
 // ===== Console Easter Egg =====
 console.log('%c👋 Hey there, curious developer!', 'font-size: 20px; font-weight: bold; color: #FF6B6B;');
 console.log('%cThanks for checking out my portfolio. Feel free to reach out!', 'font-size: 14px; color: #737373;');
