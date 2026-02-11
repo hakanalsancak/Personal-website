@@ -149,13 +149,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 });
 
-// ===== Newsletter Subscription Form (Buttondown Embed) =====
+// ===== Newsletter Subscription Form (Buttondown via Serverless) =====
+// Using our serverless function to avoid CORS issues
 const newsletterForm = document.getElementById('newsletterForm');
 const emailInput = document.getElementById('bd-email');
 const formMessage = document.getElementById('formMessage');
 
 if (newsletterForm && emailInput && formMessage) {
-
     newsletterForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -178,25 +178,40 @@ if (newsletterForm && emailInput && formMessage) {
         formMessage.className = 'form-message';
         
         try {
-            // Submit to Buttondown's embed endpoint
-            const formData = new FormData();
-            formData.append('email', email);
-            
-            const response = await fetch('https://buttondown.com/api/emails/embed-subscribe/hakanalsancak', {
+            // Use our serverless function which calls Buttondown API
+            const response = await fetch('/api/subscribe', {
                 method: 'POST',
-                body: formData,
-                referrerPolicy: 'unsafe-url'
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: email })
             });
             
-            // Buttondown returns HTML on success, so we check status
-            if (response.ok || response.status === 200) {
+            // Parse JSON response
+            let data;
+            try {
+                const text = await response.text();
+                data = text ? JSON.parse(text) : {};
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError);
+                throw new Error('Invalid response from server');
+            }
+            
+            if (!response.ok) {
+                const errorText = typeof data.error === 'string' 
+                    ? data.error 
+                    : (data.error?.message || 'Subscription failed');
+                throw new Error(errorText);
+            }
+            
+            // Handle success or already subscribed
+            if (data.message === 'already_subscribed') {
+                formMessage.textContent = '✅ You\'re already subscribed!';
+                formMessage.className = 'form-message success';
+            } else {
                 formMessage.textContent = '🎉 Successfully subscribed! Check your email for confirmation.';
                 formMessage.className = 'form-message success';
                 emailInput.value = '';
-            } else {
-                // Try to parse error if available
-                const text = await response.text();
-                throw new Error('Subscription failed. Please try again.');
             }
             
         } catch (error) {
@@ -207,6 +222,11 @@ if (newsletterForm && emailInput && formMessage) {
             
             if (error && typeof error.message === 'string') {
                 errorMsg = error.message;
+            }
+            
+            // Check for network errors
+            if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError')) {
+                errorMsg = 'Unable to connect. Please check your internet connection and try again.';
             }
             
             formMessage.textContent = `❌ ${errorMsg}`;
