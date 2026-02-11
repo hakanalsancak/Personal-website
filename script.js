@@ -186,10 +186,22 @@ if (newsletterForm) {
                 body: JSON.stringify({ email: email })
             });
             
-            const data = await response.json();
+            // Parse JSON response safely
+            let data;
+            try {
+                const text = await response.text();
+                data = text ? JSON.parse(text) : {};
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError);
+                throw new Error('Invalid response from server');
+            }
             
             if (!response.ok) {
-                throw new Error(data.error || 'Subscription failed');
+                // Extract error message safely
+                const errorText = typeof data.error === 'string' 
+                    ? data.error 
+                    : (data.error?.message || 'Subscription failed');
+                throw new Error(errorText);
             }
             
             // Handle success or already subscribed
@@ -205,13 +217,27 @@ if (newsletterForm) {
         } catch (error) {
             console.error('Subscription error:', error);
             
-            // User-friendly error messages
-            let errorMsg = error.message || 'Something went wrong. Please try again later.';
+            // Safely extract error message
+            let errorMsg = 'Something went wrong. Please try again later.';
+            
+            if (error && typeof error === 'object') {
+                if (typeof error.message === 'string') {
+                    errorMsg = error.message;
+                } else if (typeof error.toString === 'function') {
+                    errorMsg = error.toString();
+                }
+            } else if (typeof error === 'string') {
+                errorMsg = error;
+            }
             
             // Check if it's a network/fetch error
-            if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+            if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError') || errorMsg.includes('fetch')) {
                 errorMsg = 'Unable to connect to the server. Please make sure you\'re connected to the internet and try again.';
-                console.error('Network error - API endpoint may not be available. Make sure the site is deployed to Vercel or run "vercel dev" for local testing.');
+            }
+            
+            // Ensure we have a valid string
+            if (typeof errorMsg !== 'string' || errorMsg === '[object Object]') {
+                errorMsg = 'Something went wrong. Please try again later.';
             }
             
             formMessage.textContent = `❌ ${errorMsg}`;
