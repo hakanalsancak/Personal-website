@@ -1130,27 +1130,6 @@ body:hover .cursor-glow {
     color: var(--coral);
 }
 
-.buttondown-attribution {
-    margin-top: var(--space-sm);
-    text-align: center;
-}
-
-.buttondown-attribution a {
-    font-size: 0.75rem;
-    color: var(--gray-400);
-    text-decoration: none;
-    transition: var(--transition-base);
-}
-
-.buttondown-attribution a:hover {
-    color: var(--gray-600);
-}
-
-/* Hide default Buttondown label if present */
-.embeddable-buttondown-form label {
-    display: none;
-}
-
 @media (max-width: 768px) {
     .newsletter {
         padding: var(--space-3xl) var(--space-lg);

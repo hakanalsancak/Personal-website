@@ -149,8 +149,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 });
 
-// ===== Newsletter Subscription Form (Buttondown via Serverless) =====
-// Using our serverless function to avoid CORS issues
+// ===== Newsletter Subscription Form (FreeWaitlists) =====
+const FREEWAITLISTS_ENDPOINT = 'https://api.freewaitlists.com/waitlists/cmoecejgp002m01qtnjxr0fyy';
+
 const newsletterForm = document.getElementById('newsletterForm');
 const emailInput = document.getElementById('bd-email');
 const formMessage = document.getElementById('formMessage');
@@ -158,81 +159,79 @@ const formMessage = document.getElementById('formMessage');
 if (newsletterForm && emailInput && formMessage) {
     newsletterForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const email = emailInput.value.trim();
-        
-        // Basic email validation
+
         if (!email || !email.includes('@')) {
             formMessage.textContent = '❌ Please enter a valid email address.';
             formMessage.className = 'form-message error';
             return;
         }
-        
+
         const submitButton = newsletterForm.querySelector('button[type="submit"]');
         const originalButtonText = submitButton.innerHTML;
-        
-        // Disable form during submission
+
         submitButton.disabled = true;
         submitButton.innerHTML = '<span>Subscribing...</span>';
         formMessage.textContent = '';
         formMessage.className = 'form-message';
-        
+
         try {
-            // Use our serverless function which calls Buttondown API
-            const response = await fetch('/api/subscribe', {
+            const response = await fetch(FREEWAITLISTS_ENDPOINT, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email: email })
+                body: JSON.stringify({
+                    email: email,
+                    meta: {
+                        source: 'personal-website'
+                    }
+                })
             });
-            
-            // Parse JSON response
-            let data;
+
+            let data = {};
             try {
                 const text = await response.text();
                 data = text ? JSON.parse(text) : {};
             } catch (parseError) {
                 console.error('JSON parse error:', parseError);
-                throw new Error('Invalid response from server');
             }
-            
+
             if (!response.ok) {
-                const errorText = typeof data.error === 'string' 
-                    ? data.error 
-                    : (data.error?.message || 'Subscription failed');
-                throw new Error(errorText);
+                const rawMessage = data.error || data.message || data.detail || '';
+                const lower = typeof rawMessage === 'string' ? rawMessage.toLowerCase() : '';
+
+                if (lower.includes('already') || lower.includes('exists') || lower.includes('duplicate')) {
+                    formMessage.textContent = '✅ You\'re already on the list!';
+                    formMessage.className = 'form-message success';
+                    emailInput.value = '';
+                    return;
+                }
+
+                throw new Error(typeof rawMessage === 'string' && rawMessage ? rawMessage : 'Subscription failed');
             }
-            
-            // Handle success or already subscribed
-            if (data.message === 'already_subscribed') {
-                formMessage.textContent = '✅ You\'re already subscribed!';
-                formMessage.className = 'form-message success';
-            } else {
-                formMessage.textContent = '🎉 Successfully subscribed! Check your email for confirmation.';
-                formMessage.className = 'form-message success';
-                emailInput.value = '';
-            }
-            
+
+            formMessage.textContent = '🎉 You\'re on the list! I\'ll be in touch.';
+            formMessage.className = 'form-message success';
+            emailInput.value = '';
+
         } catch (error) {
             console.error('Subscription error:', error);
-            
-            // User-friendly error messages
+
             let errorMsg = 'Something went wrong. Please try again later.';
-            
+
             if (error && typeof error.message === 'string') {
                 errorMsg = error.message;
             }
-            
-            // Check for network errors
+
             if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError')) {
                 errorMsg = 'Unable to connect. Please check your internet connection and try again.';
             }
-            
+
             formMessage.textContent = `❌ ${errorMsg}`;
             formMessage.className = 'form-message error';
         } finally {
-            // Reset button
             submitButton.disabled = false;
             submitButton.innerHTML = originalButtonText;
         }
